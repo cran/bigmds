@@ -1,0 +1,17 @@
+954a395d65cfdfef45b29047f30e3b8e *DESCRIPTION
+b85946d530b96dffe8ebb921b16e27cc *LICENSE
+a9776e3b354204fde681aa4b3c241d1f *NAMESPACE
+68b06b3e84c8d311823068ce522dba8f *NEWS.md
+83218421b97148eab574ae5667eea066 *R/divide_conquer_mds.R
+e7d43b79fb9f5b1693e12453d84cc3ac *R/fast_mds.R
+7edad81fe3245bf1ac74d94b668aca0a *R/gower_interpolation_mds.R
+9bde9bc475e95da112067b47ce36adfc *R/utils.R
+66413afac50a49698d43862648b8e5ed *README.md
+1f3eca2aa78551762dcc1c7ceb101da4 *man/divide_conquer_mds.Rd
+5565e3ba72a19a7457a03dc291e657a1 *man/fast_mds.Rd
+17ea8111199a70a76084dcece9948b39 *man/gower_interpolation_mds.Rd
+ee4d578f92bfb90c319d66ca6ffd017c *tests/testthat.R
+372586f291d675a07091f83db70ae615 *tests/testthat/test-divide_conquer_mds.R
+07a8992f50eb7157fab5acad67e3e435 *tests/testthat/test-fast_mds.R
+e511562910bfa76eadd9d138b3260792 *tests/testthat/test-gower_interpolation_mds.R
+4dc755839b72e734877d708f6b65ea3b *tests/testthat/test-utils.R
