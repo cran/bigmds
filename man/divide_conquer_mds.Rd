@@ -4,33 +4,66 @@
 \alias{divide_conquer_mds}
 \title{Divide and Conquer MDS}
 \usage{
-divide_conquer_mds(x, l, s, k)
+divide_conquer_mds(x, l, tie, k, dist_fn = stats::dist, ...)
 }
 \arguments{
-\item{x}{Data matrix.}
+\item{x}{A matrix with n individuals (rows) and q variables (columns).}
 
-\item{l}{The highest value where classical MDS can be computed efficiently.}
+\item{l}{The largest value which allows classical MDS to be computed efficiently, i.e, the largest value which makes
+\code{cmdscale()} be run without any computational issues.}
 
-\item{s}{Number of sampling points. It should be 2 x estimated data dimension.}
+\item{tie}{Number of points used to align the MDS solutions obtained by the division of \code{x} into p submatrices.
+Recommended value: \code{2·k}.}
 
-\item{k}{Number of principal coordinates.}
+\item{k}{Number of principal coordinates to be extracted.}
+
+\item{dist_fn}{Distance function to be used for obtaining a MDS configuration.}
+
+\item{...}{Further arguments passed to \code{dist_fn} function.}
 }
 \value{
-Returns MDS based on Divide and Conquer MDS as well as the first k eigenvalues.
+Returns a list containing the following elements:
 \describe{
-\item{points}{MDS}
-\item{eigen}{eigenvalues}
+\item{points}{A matrix that consists of n individuals (rows) and \code{k} variables (columns) corresponding to the
+MDS coordinates.}
+\item{eigen}{The first \code{k} eigenvalues.}
 }
 }
 \description{
-Performs Multidimensional Scaling based on Delicado and Pachon-Garcia, 2020.
+Performs \emph{Multidimensional Scaling} for big datasets using a Divide and Conquer strategy. This method can
+compute a MDS configuration even when the dataset is so large that classical MDS methods (\code{cmdscale}) can not be run
+due to computational problems.
+}
+\details{
+In order to obtain a MDS configuration for the entire matrix \code{x}, it is needed to break the dataset into
+p submatrices (\emph{Divide and Conquer strategy}).
+
+In order to obtain p, \code{tie} and \code{l} are taken into account: p=n/\code{(l-tie)}. This allows to use
+\code{cmdscale} function in every submatrix.
+
+Taking into account that given a MDS solution, any rotation is another (valid) MDS solution, it is needed a way to
+obtain the same coordinate system for all the partitions.
+
+To achieve such a common coordinate system, the algorithm starts by taking the first partition and calculating a MDS
+configuration as well as a subsample of size \code{tie} (from the partition, not from its MDS configuration).
+These \code{tie} points will be used in order to force the other partitions to have the same coordinate system as the
+first one.
+
+Given a partition, the \code{tie} points are appended to it. After that, a MDS configuration is obtained. Therefore,
+for these \code{tie} points there are two MDS solutions. In order to aligned them, Procrustes parameters are
+obtained. These parameters are applied to the MDS configuration of the partition.
 }
 \examples{
-x <- matrix(data = rnorm(4*10000, sd = 10), nrow = 10000)
-cmds <- divide_conquer_mds(x = x, l = 100, s = 8, k = 2)
-head(cmds$points)
-cmds$eigen
+set.seed(42)
+x <- matrix(data = rnorm(4*10000), nrow = 10000) \%*\% diag(c(15, 10, 1, 1))
+mds <- divide_conquer_mds(x = x, l = 200, tie = 2*2, k = 2, dist_fn = stats::dist)
+head(cbind(mds$points, x[, 1:2]))
+var(x)
+var(mds$points)
 }
-\seealso{
+\references{
+Delicado P. and C. Pachon-Garcia (2020). \emph{Multidimensional Scaling for Big Data}.
 \url{https://arxiv.org/abs/2007.11919}
+
+Borg, I. and Groenen, P. (2005). \emph{Modern Multidimensional Scaling: Theory and Applications}. Springer.
 }
