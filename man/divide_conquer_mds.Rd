@@ -2,68 +2,95 @@
 % Please edit documentation in R/divide_conquer_mds.R
 \name{divide_conquer_mds}
 \alias{divide_conquer_mds}
-\title{Divide and Conquer MDS}
+\title{Divide-and-conquer MDS}
 \usage{
-divide_conquer_mds(x, l, tie, k, dist_fn = stats::dist, ...)
+divide_conquer_mds(x, l, c_points, r, n_cores = 1, dist_fn = stats::dist, ...)
 }
 \arguments{
-\item{x}{A matrix with n individuals (rows) and q variables (columns).}
+\item{x}{A matrix with \eqn{n} points (rows) and \eqn{k} variables (columns).}
 
-\item{l}{The largest value which allows classical MDS to be computed efficiently, i.e, the largest value which makes
-\code{cmdscale()} be run without any computational issues.}
+\item{l}{The size for which classical MDS can be computed efficiently
+(using \code{cmdscale} function). It means that if \eqn{\bar{l}} is the limit
+size for which classical MDS is applicable, then \code{l}\eqn{\leq \bar{l}}.}
 
-\item{tie}{Number of points used to align the MDS solutions obtained by the division of \code{x} into p submatrices.
-Recommended value: \code{2·k}.}
+\item{c_points}{Number of points used to align the MDS solutions obtained by the
+division of \code{x} into \eqn{p} data subsets. Recommended value: \code{2·r}.}
 
-\item{k}{Number of principal coordinates to be extracted.}
+\item{r}{Number of principal coordinates to be extracted.}
 
-\item{dist_fn}{Distance function to be used for obtaining a MDS configuration.}
+\item{n_cores}{Number of cores wanted to use to run the algorithm.}
+
+\item{dist_fn}{Distance function used to compute the distance between the rows.}
 
 \item{...}{Further arguments passed to \code{dist_fn} function.}
 }
 \value{
 Returns a list containing the following elements:
 \describe{
-\item{points}{A matrix that consists of n individuals (rows) and \code{k} variables (columns) corresponding to the
-MDS coordinates.}
-\item{eigen}{The first \code{k} eigenvalues.}
+\item{points}{A matrix that consists of \eqn{n} points (rows)
+and \code{r} variables (columns) corresponding to the MDS coordinates. Since
+a dimensionality reduction is performed, \code{r}\eqn{<<k}}
+\item{eigen}{The first \code{r} largest eigenvalues:
+\eqn{\bar{\lambda}_i, i \in  \{1, \dots, r\} }, where
+\eqn{\bar{\lambda}_i = 1/p \sum_{j=1}^{p}\lambda_j/n_j},
+being \eqn{n_j} the size of the partition \eqn{j}.}
+\item{GOF}{A numeric vector of length 2.
+
+The first element corresponds to
+\eqn{1/n \sum_{j=1}^{p}n_jG_1^j}, where
+\eqn{G_1^j = \sum_{i = 1}^{r} \lambda_{i}^{j}/ \sum_{i = 1}^{n-1} |\lambda_{i}^{j}|}.
+
+The second element corresponds to
+\eqn{1/n \sum_{j=1}^{p}n_jG_2^j} where
+\eqn{G_2^j = \sum_{i = 1}^{r} \lambda_{i}^{j}/ \sum_{i = 1}^{n-1} max(\lambda_{i}^{j}, 0).}}
 }
 }
 \description{
-Performs \emph{Multidimensional Scaling} for big datasets using a Divide and Conquer strategy. This method can
-compute a MDS configuration even when the dataset is so large that classical MDS methods (\code{cmdscale}) can not be run
-due to computational problems.
+Roughly speaking, a large data set, \code{x}, of size \eqn{n}
+is divided into parts, then classical MDS is performed over every part and,
+finally, the partial configurations are combined so that all the points lie
+on the same coordinate system with the aim to obtain a global MDS configuration.
 }
 \details{
-In order to obtain a MDS configuration for the entire matrix \code{x}, it is needed to break the dataset into
-p submatrices (\emph{Divide and Conquer strategy}).
+The divide-and-conquer MDS starts dividing the \eqn{n} points into
+\eqn{p} partitions: the first partition contains \code{l} points and the others
+contain \code{l-c_points} points. Therefore, \eqn{p = 1 + (n-}\code{l)/(l-c_points)}.
+The partitions are created at random.
 
-In order to obtain p, \code{tie} and \code{l} are taken into account: p=n/\code{(l-tie)}. This allows to use
-\code{cmdscale} function in every submatrix.
+Once the partitions are created, \code{c_points} different random
+points are taken from the first partition and concatenated to the other
+partitions After that, classical MDS is applied to each partition,
+with target low dimensional configuration \code{r}.
 
-Taking into account that given a MDS solution, any rotation is another (valid) MDS solution, it is needed a way to
-obtain the same coordinate system for all the partitions.
-
-To achieve such a common coordinate system, the algorithm starts by taking the first partition and calculating a MDS
-configuration as well as a subsample of size \code{tie} (from the partition, not from its MDS configuration).
-These \code{tie} points will be used in order to force the other partitions to have the same coordinate system as the
-first one.
-
-Given a partition, the \code{tie} points are appended to it. After that, a MDS configuration is obtained. Therefore,
-for these \code{tie} points there are two MDS solutions. In order to aligned them, Procrustes parameters are
-obtained. These parameters are applied to the MDS configuration of the partition.
+Since all the partitions share \code{c_points}
+points with the first one, Procrustes can be applied in order to align all
+the configurations. Finally, all the configurations are
+concatenated in order to obtain a global MDS configuration.
 }
 \examples{
 set.seed(42)
-x <- matrix(data = rnorm(4*10000), nrow = 10000) \%*\% diag(c(15, 10, 1, 1))
-mds <- divide_conquer_mds(x = x, l = 200, tie = 2*2, k = 2, dist_fn = stats::dist)
-head(cbind(mds$points, x[, 1:2]))
-var(x)
-var(mds$points)
+x <- matrix(data = rnorm(4*10000), nrow = 10000) \%*\% diag(c(9, 4, 1, 1))
+mds <- divide_conquer_mds(x = x, l = 200, c_points = 2*2, r = 2, n_cores = 1, dist_fn = stats::dist)
+head(mds$points)
+mds$eigen
+mds$GOF
+points <- mds$points
+plot(x[1:10, 1],
+     x[1:10, 2],
+     xlim = range(c(x[1:10,1],points[1:10,1])),
+     ylim = range(c(x[1:10,2], points[1:10,2])),
+     pch = 19,
+     col = "green")
+text(x[1:10, 1], x[1:10, 2], labels=1:10)
+points(points[1:10, 1], points[1:10, 2], pch = 19, col = "orange")
+text(points[1:10, 1], points[1:10, 2], labels=1:10)
+abline(v = 0, lwd=3, lty=2)
+abline(h = 0, lwd=3, lty=2)
+
 }
 \references{
-Delicado P. and C. Pachon-Garcia (2020). \emph{Multidimensional Scaling for Big Data}.
-\url{https://arxiv.org/abs/2007.11919}
+Delicado P. and C. Pachon-Garcia (2021). \emph{Multidimensional Scaling for Big Data}.
+\url{https://arxiv.org/abs/2007.11919}.
 
-Borg, I. and Groenen, P. (2005). \emph{Modern Multidimensional Scaling: Theory and Applications}. Springer.
+Borg, I. and P. Groenen (2005). \emph{Modern Multidimensional Scaling: Theory and Applications}. Springer.
 }
