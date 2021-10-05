@@ -28,12 +28,13 @@ division of \code{x} into \eqn{p} data subsets. Recommended value: \code{2·r}.}
 Returns a list containing the following elements:
 \describe{
 \item{points}{A matrix that consists of \eqn{n} points (rows)
-and \code{r} variables (columns) corresponding to the MDS coordinates. Since
+and \code{r} variables (columns) corresponding to the principal coordinates. Since
 a dimensionality reduction is performed, \code{r}\eqn{<<k}}
 \item{eigen}{The first \code{r} largest eigenvalues:
 \eqn{\bar{\lambda}_i, i \in  \{1, \dots, r\} }, where
-\eqn{\bar{\lambda}_i = 1/p \sum_{j=1}^{p}\lambda_j/n_j},
-being \eqn{n_j} the size of the partition \eqn{j}.}
+\eqn{\bar{\lambda}_i = 1/p \sum_{j=1}^{p}\lambda_i^j/n_j},
+being \eqn{\lambda_i^j} the \eqn{i-th} eigenvalue from partition \eqn{j}
+and \eqn{n_j} the size of the partition \eqn{j}.}
 \item{GOF}{A numeric vector of length 2.
 
 The first element corresponds to
@@ -89,7 +90,7 @@ abline(h = 0, lwd=3, lty=2)
 
 }
 \references{
-Delicado P. and C. Pachon-Garcia (2021). \emph{Multidimensional Scaling for Big Data}.
+Delicado P. and C. Pachón-García (2021). \emph{Multidimensional Scaling for Big Data}.
 \url{https://arxiv.org/abs/2007.11919}.
 
 Borg, I. and P. Groenen (2005). \emph{Modern Multidimensional Scaling: Theory and Applications}. Springer.
